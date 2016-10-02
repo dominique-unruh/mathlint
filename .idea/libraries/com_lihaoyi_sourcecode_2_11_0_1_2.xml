@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="com.lihaoyi:sourcecode_2.11:0.1.2" type="repository">
+    <properties maven-id="com.lihaoyi:sourcecode_2.11:0.1.2" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/lihaoyi/sourcecode_2.11/0.1.2/sourcecode_2.11-0.1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/scala-lang/scala-compiler/2.11.7/scala-compiler-2.11.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/scala-lang/scala-library/2.11.7/scala-library-2.11.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/scala-lang/scala-reflect/2.11.7/scala-reflect-2.11.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/scala-lang/modules/scala-xml_2.11/1.0.4/scala-xml_2.11-1.0.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/scala-lang/modules/scala-parser-combinators_2.11/1.0.4/scala-parser-combinators_2.11-1.0.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

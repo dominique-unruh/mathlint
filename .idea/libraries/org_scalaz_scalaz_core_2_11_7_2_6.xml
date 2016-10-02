@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="org.scalaz:scalaz-core_2.11:7.2.6" type="repository">
+    <properties maven-id="org.scalaz:scalaz-core_2.11:7.2.6" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/scalaz/scalaz-core_2.11/7.2.6/scalaz-core_2.11-7.2.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/scala-lang/scala-library/2.11.8/scala-library-2.11.8.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

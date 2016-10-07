@@ -1,0 +1,6 @@
+arith1.plus:
+  priority: 100
+arith1.times:
+  priority: 200
+arith1.divide:
+  priority: atom

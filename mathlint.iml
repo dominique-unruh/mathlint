@@ -14,5 +14,6 @@
     <orderEntry type="library" name="com.lihaoyi:fastparse_2.11:0.3.7" level="project" />
     <orderEntry type="library" name="org.scalaz:scalaz-core_2.11:7.2.6" level="project" />
     <orderEntry type="library" name="org.bitbucket.inkytonik.kiama:kiama_2.11:2.0.0" level="project" />
+    <orderEntry type="library" name="org.yaml:snakeyaml:1.17" level="project" />
   </component>
 </module>

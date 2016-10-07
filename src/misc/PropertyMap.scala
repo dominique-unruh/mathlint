@@ -5,10 +5,12 @@ import scala.collection.mutable.MapBuilder
 import scala.collection.{GenIterable, GenMap, GenMapLike, GenSet, IterableLike, Map, mutable}
 import scala.language.existentials
 
-trait Property[T] {
+abstract class Property[T] {
   def unapply(map: PropertyMap): Some[T] = Some(map(this))
   val name : String
   val default : T
+  def parse(string:String) : T
+  override def toString = name
 }
 
 class PropertyMap private (private val map : Map[Property[_],Any]) 
@@ -41,4 +43,21 @@ class PropertyMap private (private val map : Map[Property[_],Any])
     }
 
   def apply[T](v1: Property[T]): T = map.getOrElse(v1,v1.default).asInstanceOf[T]
+
+  override def toString = map.toString
+}
+
+object PropertyMap {
+  def apply(seq: ((Property[T],T) forSome {type T})*) = new PropertyMap(Map(seq : _*))
+
+  private def keyValueFromPropString[T](prop: Property[T], str: String) =
+    (prop,prop.parse(str))
+
+  def parsePropertyMap(map: Iterable[(String,String)], properties:Map[String,Property[_]]): PropertyMap = {
+    PropertyMap((for {
+      (name,valStr) <- map
+      prop = properties(name)
+      keyval = keyValueFromPropString(prop,valStr)
+    } yield keyval).toSeq : _*)
+  }
 }

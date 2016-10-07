@@ -5,29 +5,35 @@ import java.security.MessageDigest
 
 import cmathml.CMathML.arith1
 import cmathml._
+import latex.LatexRender.SymbolProperties
+import mathcontent.Properties.Priority
 import org.bitbucket.inkytonik.kiama.attribution.{Attribute, Attribution}
 import org.bitbucket.inkytonik.kiama.relation.Tree
 
 import scalaz.Cord
 import misc.CordUtils._
+import misc.PropertyMap
 
-import scala.collection.mutable.ListBuffer
 import scala.sys.process.{Process, ProcessLogger}
 
-class LatexRender(val math : CMathML) {
+
+class LatexRender(props: SymbolProperties, val math : CMathML) {
   import LatexRender._
 
   val tree = new Tree[CMathML,CMathML](math)
   object Attr extends Attribution
   import Attr._
 
-  val priorityAtom = Int.MaxValue
-  val priorityLowest = Int.MinValue
-  val priorities : Map[CSymbol.Id,Int] = List(
-    arith1.plus -> 100,
-    arith1.times -> 200,
-    arith1.divide -> priorityAtom
-  ).map { case (s,p) => (s.id,p) }.toMap[CSymbol.Id,Int]
+  val priorities : Map[CSymbol.Id,Int] = (for {
+    (sym,symProps) <- props
+    Some(pri) = symProps(Priority)
+  } yield sym -> pri)
+
+//    List(
+//    arith1.plus -> 100,
+//    arith1.times -> 200,
+//    arith1.divide -> priorityAtom
+//  ).map { case (s,p) => (s.id,p) }.toMap[CSymbol.Id,Int]
 
   private def getPriority(math:CMathML) = math match {
     case Apply(_, sym : CSymbol, _*) =>
@@ -135,6 +141,9 @@ object LatexRender {
   final case class Arg(idx: Int) extends DescendantKind
   final case class Var(idx: Int) extends DescendantKind
 
+  val priorityAtom = Int.MaxValue
+  val priorityLowest = Int.MinValue
+
   def run(cmd: Seq[String], cwd: File) : Unit = {
     val output = new StringBuilder
     val logger = new ProcessLogger {
@@ -168,15 +177,16 @@ object LatexRender {
     new File("images/"+hash+".png")
   }
 
+  type SymbolProperties = Map[CSymbol.Id,PropertyMap]
 
-  def formulaListToHtml(formulaList : File, htmlFile : File) = {
+  def formulaListToHtml(props: SymbolProperties, formulaList : File, htmlFile : File) = {
     val reader = new BufferedReader(new FileReader(formulaList))
     val formulas : Seq[String] = reader.lines.toArray.toList.asInstanceOf[List[String]]
     reader.close()
     val html = new PrintWriter(htmlFile)
     html.write("<html><head></head><body><table border=1>")
     for (f <- formulas) {
-      val render = new LatexRender(CMathML.fromPopcorn(f))
+      val render = new LatexRender(props, CMathML.fromPopcorn(f))
       val latex = render.toLatex().toString
       val png = makePng(latex)
       html.write(s"<tr><td>$f</td><td><img src='$png'/></td></tr>\n")

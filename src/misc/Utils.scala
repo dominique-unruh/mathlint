@@ -5,7 +5,7 @@ import java.lang.Thread.UncaughtExceptionHandler
 import java.security.{AccessController, PrivilegedAction}
 import java.util.function.Predicate
 import java.util.regex.Pattern
-import javafx.beans.property.{ObjectProperty, ObjectPropertyBase, Property, SimpleObjectProperty}
+import javafx.beans.property.{SimpleObjectProperty}
 import javafx.beans.property.adapter.JavaBeanObjectProperty
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.event.Event

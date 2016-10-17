@@ -13,6 +13,10 @@ abstract class Property[T] {
   override def toString = name
 }
 
+abstract class OptionProperty[T] extends Property[Option[T]] {
+  override val default = None
+}
+
 class PropertyMap private (private val map : Map[Property[_],Any]) 
   extends IterableLike[(Property[T], T) forSome {type T}, PropertyMap]
     with Iterable[(Property[T], T) forSome {type T}]

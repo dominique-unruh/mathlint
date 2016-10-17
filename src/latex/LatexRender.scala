@@ -6,7 +6,7 @@ import java.security.MessageDigest
 import cmathml.CMathML.arith1
 import cmathml._
 import latex.LatexRender.SymbolProperties
-import mathcontent.Properties.Priority
+import mathcontent.Properties.{ArgumentPriority, Priority, ToLatex}
 import org.bitbucket.inkytonik.kiama.attribution.{Attribute, Attribution}
 import org.bitbucket.inkytonik.kiama.relation.Tree
 
@@ -24,16 +24,10 @@ class LatexRender(props: SymbolProperties, val math : CMathML) {
   object Attr extends Attribution
   import Attr._
 
-  val priorities : Map[CSymbol.Id,Int] = (for {
+  val priorities : Map[CSymbol.Id,Int] = for {
     (sym,symProps) <- props
     Some(pri) = symProps(Priority)
-  } yield sym -> pri)
-
-//    List(
-//    arith1.plus -> 100,
-//    arith1.times -> 200,
-//    arith1.divide -> priorityAtom
-//  ).map { case (s,p) => (s.id,p) }.toMap[CSymbol.Id,Int]
+  } yield sym -> pri
 
   private def getPriority(math:CMathML) = math match {
     case Apply(_, sym : CSymbol, _*) =>
@@ -85,9 +79,12 @@ class LatexRender(props: SymbolProperties, val math : CMathML) {
   })
 
   def argumentPriority(parent: CMathML, descendantKind: DescendantKind) : Int = (parent, descendantKind) match {
-    case (arith1.divideE(_,_), Arg(_)) => priorityLowest
+//    case (arith1.divideE(_,_), Arg(_)) => priorityLowest // TODO: Read from config.yaml
     case (Apply(_, sym : CSymbol, args@_*), Arg(_)) =>
-      priorities(sym.id)
+      props(sym.id)(ArgumentPriority) match {
+        case Some(pri) => pri
+        case None => priorities(sym.id)
+      }
     case (Apply(_, sym : CSymbol, args@_*), Head) => 0 // TODO (matters only for symbols that have no infix renderer)
     case _ => sys.error(s"nyi(argumentPriority): $parent $descendantKind")
   }
@@ -111,15 +108,20 @@ class LatexRender(props: SymbolProperties, val math : CMathML) {
 
   def toLatex(math:CMathML = tree.root) : Cord = {
     val ltx : Cord = math match {
-      case arith1.plusE(args@_*) => Cord.mkCord("+", args.map(toLatex): _*)
-      case arith1.timesE(args@_*) => Cord.mkCord("\\cdot", args.map(toLatex): _*)
-      case arith1.divideE(a,b) => rcord"\frac{${toLatex(a)}}{${toLatex(b)}}"
-      case Apply(_, hd, args@_*) =>
-        val argList = Cord.mkCord("+", args.map(toLatex): _*)
-        rcord"\mathbf{$hd}\left($argList\right)"
+      case Apply(_, hd, args @_*) =>
+        val render = hd match { case sym:CSymbol => props(sym.id)(ToLatex); case _ => None }
+        render match {
+          case None =>
+            val argList = Cord.mkCord(",", args.map(toLatex): _*)
+            rcord"\mathbf{$hd}\left($argList\right)"
+          case Some(render) =>
+            render(math,toLatex)
+        }
+
       case CI(_, name) =>
         if (name.length == 1) name
         else rcord"\mathit{$name}"
+
       case CN(_, num) => num.toString
     }
 
@@ -128,8 +130,6 @@ class LatexRender(props: SymbolProperties, val math : CMathML) {
     else
       ltx
   }
-
-
 }
 
 object LatexRender {
@@ -184,7 +184,7 @@ object LatexRender {
     val formulas : Seq[String] = reader.lines.toArray.toList.asInstanceOf[List[String]]
     reader.close()
     val html = new PrintWriter(htmlFile)
-    html.write("<html><head></head><body><table border=1>")
+    html.write("<html><head><meta http-equiv='refresh' content='5'></head><body><table border=1>")
     for (f <- formulas) {
       val render = new LatexRender(props, CMathML.fromPopcorn(f))
       val latex = render.toLatex().toString

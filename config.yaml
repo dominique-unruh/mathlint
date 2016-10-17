@@ -1,6 +1,13 @@
 arith1.plus:
   priority: 100
+  latex: infix +
+arith1.plus:
+  priority: 100
+  latex: infix -
 arith1.times:
   priority: 200
+  latex: infix \cdot
 arith1.divide:
   priority: atom
+  argPriority: lowest
+  latex: template \frac{#1}{#2}

@@ -2,22 +2,64 @@ package mathcontent
 
 import java.io.{File, FileReader}
 
-import cmathml.{CMathML, CN, CSymbol}
+import cmathml.{Apply, CMathML, CN, CSymbol}
 import latex.LatexRender
-import misc.{Property, PropertyMap}
+import misc.{OptionProperty, Property, PropertyMap, Utils}
 import org.yaml.snakeyaml.Yaml
+
+import scala.language.postfixOps
+import scalaz.Cord
 
 object Properties {
   val knownProperties = List(
-    Priority
+    Priority, ToLatex, ArgumentPriority
   )
   val properties = (for (pri <- knownProperties) yield pri.name -> pri).toMap[String,Property[_]]
 
-  object Priority extends Property[Option[Int]] {
+  object Priority extends OptionProperty[Int] {
     override val name: String = "priority"
-    override val default: Option[Int] = None
     override def parse(string: String): Option[Int] = string match {
       case "atom" => Some(LatexRender.priorityAtom)
+      case "lowest" => Some(LatexRender.priorityLowest)
+      case _ => Some(string.toInt)
+    }
+  }
+
+  type ToLatexT = (CMathML, CMathML => Cord) => Cord
+  object ToLatex extends OptionProperty[ToLatexT] {
+    override val name = "latex"
+    val templatePattern = "(#[0-9]+|[^#]+)".r
+    override def parse(string: String): Option[ToLatexT] = {
+      val (kind,code) = Utils.splitString2(string, ' ')
+      kind match {
+        case "infix" =>
+          val code2 = code + " " : Cord;
+          def render(math:CMathML, toLatex:CMathML=>Cord) = math match {
+            case Apply(_, _, args @_*) => Cord.mkCord(code2, args.map(toLatex): _*) }
+          Some(render)
+        case "template" =>
+          val frags : List[Either[Int,Cord]] = for (m <- templatePattern.findAllIn(code).toList)
+            yield if (m.charAt(0)=='#') Left(m.substring(1).toInt-1)
+                  else Right(m : Cord)
+          val numargs = frags collect {case Left(i) => i+1} max
+          def render(math:CMathML, toLatex:CMathML=>Cord) = math match {
+            case Apply(_, _, args @_*) =>
+              assert(args.length==numargs)
+              val frags2 = frags map { case Left(i) => toLatex(args(i)); case Right(c) => c }
+              Cord.mkCord(Cord.empty,frags2 :_*)
+          }
+          Some(render)
+        case _ => throw new RuntimeException(s"When parsing $name property: Unknown renderer type $kind")
+      }
+    }
+  }
+
+  object ArgumentPriority extends OptionProperty[Int] {
+    override val name: String = "argPriority"
+
+    override def parse(string: String): Option[Int] = string match {
+      case "atom" => Some(LatexRender.priorityAtom)
+      case "lowest" => Some(LatexRender.priorityLowest)
       case _ => Some(string.toInt)
     }
   }

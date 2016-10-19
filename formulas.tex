@@ -1,0 +1,44 @@
+\documentclass{article}
+\usepackage{etoolbox}
+
+\makeatletter
+
+\newwrite\@formulaContents
+\immediate\openout\@formulaContents=\jobname.math
+
+\DeclareRobustCommand\m[1]{%
+  \def\@temp{#1}%
+  \edef\@temp{\expandafter\strip@prefix\meaning\@temp}%
+  \edef\@temp@md{\expandafter\pdfmdfivesum\expandafter{\@temp}}
+  \immediate\write\@formulaContents{- type: formula}%
+  \immediate\write\@formulaContents{ \space formula: '\@temp'}%
+  \immediate\write\@formulaContents{ \space id: '\@temp@md'}%
+  %
+  \ifcsdef{rendered-\@temp@md}{%
+    \ensuremath{\csuse{rendered-\@temp@md}}}{%
+    \textbf{[??:\@temp]}}
+}
+
+\newenvironment{mathscope}{%
+  \immediate\write\@formulaContents{- type: open scope}
+}{%
+  \immediate\write\@formulaContents{- type: close scope}
+}
+
+\InputIfFileExists{formulas.mathr}{}{}
+
+\begin{document}
+
+\begin{mathscope}
+  \m{1+2/$a}
+
+  \medskip
+
+  \m{1+2/$a+3}
+\end{mathscope}
+
+\end{document}
+
+% Local Variables:
+% TeX-PDF-mode: t
+% End:

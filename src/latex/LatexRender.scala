@@ -13,8 +13,11 @@ import org.bitbucket.inkytonik.kiama.relation.Tree
 import scalaz.Cord
 import misc.CordUtils._
 import misc.PropertyMap
+import org.yaml.snakeyaml.Yaml
 
 import scala.sys.process.{Process, ProcessLogger}
+
+import scala.collection.JavaConversions._
 
 
 class LatexRender(props: SymbolProperties, val math : CMathML) {
@@ -118,6 +121,12 @@ class LatexRender(props: SymbolProperties, val math : CMathML) {
             render(math,toLatex)
         }
 
+      case _:Bind => throw new RuntimeException("Not yet supported: binders")
+      case _:CBytes => throw new RuntimeException("Not yet supported: CBytes")
+      case _:CError => throw new RuntimeException("Not yet supported: CError")
+      case _:CS => throw new RuntimeException("Not yet supported: CS")
+      case _:CSymbol => throw new RuntimeException("Not yet supported: CSymbol")
+
       case CI(_, name) =>
         if (name.length == 1) name
         else rcord"\mathit{$name}"
@@ -193,5 +202,26 @@ object LatexRender {
     }
     html.write("</table></body></html>")
     html.close()
+  }
+
+  def processLatexFormulas(props: SymbolProperties, formulaFile : File, outputFile : File) = {
+    val yaml = new Yaml()
+    val data = yaml.load(new FileReader(formulaFile)).asInstanceOf[java.util.List[java.util.Map[String,Any]]]
+    val output = new PrintWriter(outputFile)
+    for (entry <- data) {
+      entry("type") match {
+        case "formula" =>
+          val formula = entry("formula").asInstanceOf[String]
+          val id = entry("id").asInstanceOf[String]
+          val render = new LatexRender(props, CMathML.fromPopcorn(formula))
+          val latex = render.toLatex().toString
+          val latexdata = s"\\csgdef{rendered-$id}{$latex}\n"
+          output.write(latexdata)
+          print(latexdata)
+        case "open scope" =>
+        case "close scope" =>
+      }
+    }
+    output.close()
   }
 }
